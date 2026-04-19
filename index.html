@@ -3,109 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Arena</title>
+    <title>Task Arena | Leaderboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #121212; 
-            color: white; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh;
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --green: #00ff88;
+            --gold: #FFD700;
+            --text: #ffffff;
         }
-        #isa-total { position: fixed; top: 20px; left: 20px; font-size: 1.5em; color: #FFD700; font-weight: bold; }
-        #liv-total { position: fixed; top: 20px; right: 20px; font-size: 1.5em; color: #FFD700; font-weight: bold; }
-        
-        .container { margin-top: 100px; text-align: center; width: 90%; max-width: 500px; }
-        h1 { color: #00ff88; text-transform: uppercase; letter-spacing: 2px; }
-        
-        .log-list { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .log-entry { 
-            padding: 10px; 
-            border-bottom: 1px solid #333; 
-            display: flex; 
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* All-Time Scores in the Corners */
+        #isa-total {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(30, 30, 30, 0.8);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--gold);
+            font-weight: bold;
+        }
+
+        #liv-total {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(30, 30, 30, 0.8);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border-right: 4px solid var(--gold);
+            font-weight: bold;
+        }
+
+        .score-val {
+            color: var(--gold);
+            font-size: 1.4em;
+            display: block;
+        }
+
+        /* Center Feed */
+        .container {
+            margin-top: 120px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 1.5em;
+            margin-bottom: 30px;
+        }
+
+        #app {
+            background: var(--card);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .log-entry {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            animation: fadeIn 0.5s ease-in;
         }
+
         .log-entry:last-child { border-bottom: none; }
-        .name { color: #00ff88; font-weight: bold; }
-        .pts { color: #aaa; }
+
+        .entry-name {
+            color: var(--green);
+            font-weight: bold;
+            flex: 1;
+            text-align: left;
+        }
+
+        .entry-task {
+            flex: 2;
+            color: #bbb;
+            font-size: 0.9em;
+        }
+
+        .entry-pts {
+            flex: 1;
+            text-align: right;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-    <div id="isa-total">Isabella: <span id="isa-score">0</span></div>
-    <div id="liv-total">Liv: <span id="liv-score">0</span></div>
+    <div id="isa-total">
+        ISABELLA
+        <span id="isa-score" class="score-val">0</span>
+    </div>
+
+    <div id="liv-total">
+        LIV
+        <span id="liv-score" class="score-val">0</span>
+    </div>
 
     <div class="container">
         <h1>Recent Activity</h1>
-        <div id="app" class="log-list">Loading the arena...</div>
+        <div id="app">Initializing...</div>
     </div>
 
 <script>
-    // PASTE YOUR PUBLISHED CSV LINK BETWEEN THE QUOTES BELOW
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRbaBJvyF2PdB9L7kWy_U2ITZzY2iMcvh0hhCvnH8_LoEMMKm9ULEwCU5JUxTWMvd-oxdfMAqyTc9JT/pub?gid=0&single=true&output=csv';
+    // 1. PASTE YOUR PUBLISHED CSV LINK HERE
+    const CSV_URL = 'PASTE_YOUR_LINK_HERE';
 
-    async function init() {
+    async function fetchData() {
         try {
             const response = await fetch(CSV_URL);
             const csvText = await response.text();
             
             Papa.parse(csvText, {
                 header: true,
+                skipEmptyLines: true,
                 complete: function(results) {
-                    processData(results.data);
+                    renderLeaderboard(results.data);
                 }
             });
-        } catch (error) {
-            document.getElementById('app').innerHTML = "Connection Error. Check your CSV link!";
-            console.error(error);
+        } catch (err) {
+            document.getElementById('app').innerHTML = "Connection Error. Check CSV Link.";
         }
     }
 
-    function processData(data) {
+    function renderLeaderboard(data) {
         let isaTotal = 0;
         let livTotal = 0;
         let html = '';
 
-        // Reverse the data so the newest entries are at the top
-        const recentEntries = data.slice().reverse();
+        // We process all data for totals, then reverse for display
+        const rows = data.slice(); 
 
-        recentEntries.forEach(row => {
+        rows.forEach(row => {
             const values = Object.values(row);
             
-            // ADJUST THESE NUMBERS IF DATA IS WRONG:
-            const name = values[1];   // Column B
-            const points = parseInt(values[2]) || 0; // Column C
-            const task = values[3] || "Task"; // Column D
+            // MAP: A=Timestamp(0), B=Name(1), C=Points(2), D=Task(3)
+            const name = values[1] ? values[1].toString().trim() : "";
+            const pts = parseInt(values[2]) || 0;
+            const task = values[3] || "";
 
-            if (!name || name === "Name") return; 
+            // Skip header or empty rows
+            if (!name || name.toLowerCase() === "name" || name.toLowerCase() === "who are you?") return;
 
-            const cleanName = name.trim().toLowerCase();
-            if (cleanName === "isabella") isaTotal += points;
-            if (cleanName === "liv") livTotal += points;
+            // Calculate Totals
+            const checkName = name.toLowerCase();
+            if (checkName === "isabella") isaTotal += pts;
+            if (checkName === "liv") livTotal += pts;
+        });
+
+        // Create the list (Newest first)
+        const displayRows = rows.reverse().slice(0, 15); // Show last 15 entries
+        displayRows.forEach(row => {
+            const values = Object.values(row);
+            const name = values[1] ? values[1].toString().trim() : "";
+            const pts = parseInt(values[2]) || 0;
+            const task = values[3] || "Task";
+
+            if (!name || name.toLowerCase() === "name" || name.toLowerCase() === "who are you?") return;
 
             html += `
                 <div class="log-entry">
-                    <span class="name">${name}</span>
-                    <span>${task}</span>
-                    <span class="pts">+${points}</span>
+                    <span class="entry-name">${name}</span>
+                    <span class="entry-task">${task}</span>
+                    <span class="entry-pts">+${pts}</span>
                 </div>
             `;
         });
 
-        // Update the Screen
+        // Update UI
         document.getElementById('isa-score').innerText = isaTotal;
         document.getElementById('liv-score').innerText = livTotal;
-        document.getElementById('app').innerHTML = html || "No entries yet!";
+        document.getElementById('app').innerHTML = html || "No entries found.";
     }
 
-    // Run the script as soon as the page loads
-    window.addEventListener('DOMContentLoaded', init);
-    // Refresh the data every 60 seconds
-    setInterval(init, 60000);
+    // Load on start
+    window.addEventListener('DOMContentLoaded', fetchData);
+    // Auto-refresh every 60 seconds
+    setInterval(fetchData, 60000);
 </script>
 
 </body>

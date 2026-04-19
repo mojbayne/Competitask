@@ -74,20 +74,19 @@
         const recentEntries = data.slice().reverse();
 
         recentEntries.forEach(row => {
-            // We get values by position in case headers are named differently
-            // [0] is Timestamp, [1] is Name, [2] is Points, [3] is Task
             const values = Object.values(row);
-            const name = values[1];
-            const points = parseInt(values[2]) || 0;
-            const task = values[3] || "Task";
+            
+            // ADJUST THESE NUMBERS IF DATA IS WRONG:
+            const name = values[1];   // Column B
+            const points = parseInt(values[2]) || 0; // Column C
+            const task = values[3] || "Task"; // Column D
 
-            if (!name) return; // Skip empty rows
+            if (!name || name === "Name") return; 
 
-            // Add to All-Time Totals
-            if (name.trim().toLowerCase() === "isabella") isaTotal += points;
-            if (name.trim().toLowerCase() === "liv") livTotal += points;
+            const cleanName = name.trim().toLowerCase();
+            if (cleanName === "isabella") isaTotal += points;
+            if (cleanName === "liv") livTotal += points;
 
-            // Add to the Activity Feed list
             html += `
                 <div class="log-entry">
                     <span class="name">${name}</span>

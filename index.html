@@ -15,6 +15,14 @@
     <h1>🏆 Daily Leaderboard</h1>
     <div id="display" class="leaderboard">Loading stats...</div>
 
+    <div id="isabella-total" style="position: fixed; top: 10px; left: 10px; font-size: 1.5em; color: gold;">
+    Isabella: <span id="isa-score">0</span>
+</div>
+
+<div id="liv-total" style="position: fixed; top: 10px; right: 10px; font-size: 1.5em; color: gold;">
+    Liv: <span id="liv-score">0</span>
+</div>
+
     <script>
         const public_spreadsheet_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRbaBJvyF2PdB9L7kWy_U2ITZzY2iMcvh0hhCvnH8_LoEMMKm9ULEwCU5JUxTWMvd-oxdfMAqyTc9JT/pub?gid=0&single=true&output=csv'; // Paste your CSV URL here
 
@@ -43,6 +51,26 @@
             document.getElementById("display").innerHTML = html;
         }
         window.addEventListener('DOMContentLoaded', init)
+
+        function showInfo(results) {
+    const data = results.data;
+    let isaTotal = 0;
+    let livTotal = 0;
+
+    data.forEach(row => {
+        // Calculate All-Time totals by summing every row for that name
+        if (row.Name === "Isabella") {
+            isaTotal += parseInt(row.Points) || 0;
+        }
+        if (row.Name === "Liv") {
+            livTotal += parseInt(row.Points) || 0;
+        }
+    });
+
+    // Update the corners of the webpage
+    document.getElementById("isa-score").innerText = isaTotal;
+    document.getElementById("liv-score").innerText = livTotal;
+}
     </script>
 </body>
 </html>

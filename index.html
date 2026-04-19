@@ -1,76 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Task Arena Leaderboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Arena</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; }
-        .leaderboard { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 10px; }
-        .player { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
-        .score { font-weight: bold; color: #00ff88; }
-        h1 { color: #00ff88; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #121212; 
+            color: white; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh;
+        }
+        #isa-total { position: fixed; top: 20px; left: 20px; font-size: 1.5em; color: #FFD700; font-weight: bold; }
+        #liv-total { position: fixed; top: 20px; right: 20px; font-size: 1.5em; color: #FFD700; font-weight: bold; }
+        
+        .container { margin-top: 100px; text-align: center; width: 90%; max-width: 500px; }
+        h1 { color: #00ff88; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .log-list { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .log-entry { 
+            padding: 10px; 
+            border-bottom: 1px solid #333; 
+            display: flex; 
+            justify-content: space-between;
+        }
+        .log-entry:last-child { border-bottom: none; }
+        .name { color: #00ff88; font-weight: bold; }
+        .pts { color: #aaa; }
     </style>
 </head>
 <body>
-    <h1>🏆 Daily Leaderboard</h1>
-    <div id="display" class="leaderboard">Loading stats...</div>
 
-    <div id="isabella-total" style="position: fixed; top: 10px; left: 10px; font-size: 1.5em; color: gold;">
-    Isabella: <span id="isa-score">0</span>
-</div>
+    <div id="isa-total">Isabella: <span id="isa-score">0</span></div>
+    <div id="liv-total">Liv: <span id="liv-score">0</span></div>
 
-<div id="liv-total" style="position: fixed; top: 10px; right: 10px; font-size: 1.5em; color: gold;">
-    Liv: <span id="liv-score">0</span>
-</div>
+    <div class="container">
+        <h1>Recent Activity</h1>
+        <div id="app" class="log-list">Loading the arena...</div>
+    </div>
 
-    <script>
-        const public_spreadsheet_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRbaBJvyF2PdB9L7kWy_U2ITZzY2iMcvh0hhCvnH8_LoEMMKm9ULEwCU5JUxTWMvd-oxdfMAqyTc9JT/pub?gid=0&single=true&output=csv'; // Paste your CSV URL here
+<script>
+    // PASTE YOUR PUBLISHED CSV LINK BETWEEN THE QUOTES BELOW
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRbaBJvyF2PdB9L7kWy_U2ITZzY2iMcvh0hhCvnH8_LoEMMKm9ULEwCU5JUxTWMvd-oxdfMAqyTc9JT/pub?gid=0&single=true&output=csv';
 
-        function init() {
-            Papa.parse(public_spreadsheet_url, {
-                download: true,
-                header: true,
-                complete: showInfo
-            })
-        }
-
-        function showInfo(results) {
-            const data = results.data;
-            let html = '';
-            // Sort by Today's Points
-            data.sort((a, b) => b["Today's Points"] - a["Today's Points"]);
+    async function init() {
+        try {
+            const response = await fetch(CSV_URL);
+            const csvText = await response.text();
             
-            data.forEach(row => {
-                if(row.Player) {
-                    html += `<div class="player">
-                                <span>${row.Player}</span>
-                                <span class="score">${row["Today's Points"]} pts</span>
-                             </div>`;
+            Papa.parse(csvText, {
+                header: true,
+                complete: function(results) {
+                    processData(results.data);
                 }
             });
-            document.getElementById("display").innerHTML = html;
+        } catch (error) {
+            document.getElementById('app').innerHTML = "Connection Error. Check your CSV link!";
+            console.error(error);
         }
-        window.addEventListener('DOMContentLoaded', init)
+    }
 
-        function showInfo(results) {
-    const data = results.data;
-    let isaTotal = 0;
-    let livTotal = 0;
+    function processData(data) {
+        let isaTotal = 0;
+        let livTotal = 0;
+        let html = '';
 
-    data.forEach(row => {
-        // Calculate All-Time totals by summing every row for that name
-        if (row.Name === "Isabella") {
-            isaTotal += parseInt(row.Points) || 0;
-        }
-        if (row.Name === "Liv") {
-            livTotal += parseInt(row.Points) || 0;
-        }
-    });
+        // Reverse the data so the newest entries are at the top
+        const recentEntries = data.slice().reverse();
 
-    // Update the corners of the webpage
-    document.getElementById("isa-score").innerText = isaTotal;
-    document.getElementById("liv-score").innerText = livTotal;
-}
-    </script>
+        recentEntries.forEach(row => {
+            // We get values by position in case headers are named differently
+            // [0] is Timestamp, [1] is Name, [2] is Points, [3] is Task
+            const values = Object.values(row);
+            const name = values[1];
+            const points = parseInt(values[2]) || 0;
+            const task = values[3] || "Task";
+
+            if (!name) return; // Skip empty rows
+
+            // Add to All-Time Totals
+            if (name.trim().toLowerCase() === "isabella") isaTotal += points;
+            if (name.trim().toLowerCase() === "liv") livTotal += points;
+
+            // Add to the Activity Feed list
+            html += `
+                <div class="log-entry">
+                    <span class="name">${name}</span>
+                    <span>${task}</span>
+                    <span class="pts">+${points}</span>
+                </div>
+            `;
+        });
+
+        // Update the Screen
+        document.getElementById('isa-score').innerText = isaTotal;
+        document.getElementById('liv-score').innerText = livTotal;
+        document.getElementById('app').innerHTML = html || "No entries yet!";
+    }
+
+    // Run the script as soon as the page loads
+    window.addEventListener('DOMContentLoaded', init);
+    // Refresh the data every 60 seconds
+    setInterval(init, 60000);
+</script>
+
 </body>
 </html>

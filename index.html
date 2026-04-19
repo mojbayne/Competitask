@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Arena Leaderboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; }
+        .leaderboard { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 10px; }
+        .player { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
+        .score { font-weight: bold; color: #00ff88; }
+        h1 { color: #00ff88; }
+    </style>
+</head>
+<body>
+    <h1>🏆 Daily Leaderboard</h1>
+    <div id="display" class="leaderboard">Loading stats...</div>
+
+    <script>
+        const public_spreadsheet_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRbaBJvyF2PdB9L7kWy_U2ITZzY2iMcvh0hhCvnH8_LoEMMKm9ULEwCU5JUxTWMvd-oxdfMAqyTc9JT/pub?gid=0&single=true&output=csv'; // Paste your CSV URL here
+
+        function init() {
+            Papa.parse(public_spreadsheet_url, {
+                download: true,
+                header: true,
+                complete: showInfo
+            })
+        }
+
+        function showInfo(results) {
+            const data = results.data;
+            let html = '';
+            // Sort by Today's Points
+            data.sort((a, b) => b["Today's Points"] - a["Today's Points"]);
+            
+            data.forEach(row => {
+                if(row.Player) {
+                    html += `<div class="player">
+                                <span>${row.Player}</span>
+                                <span class="score">${row["Today's Points"]} pts</span>
+                             </div>`;
+                }
+            });
+            document.getElementById("display").innerHTML = html;
+        }
+        window.addEventListener('DOMContentLoaded', init)
+    </script>
+</body>
+</html>

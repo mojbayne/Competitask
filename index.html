@@ -2,200 +2,94 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Arena | Live Sync</title>
+    <title>Dynamic Arena</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        body { background: #0f0f0f; color: white; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .leaderboard { display: flex; gap: 30px; justify-content: center; width: 100%; flex-wrap: wrap; margin-top: 30px; }
-        .player-column { background: #1a1a1a; padding: 25px; border-radius: 20px; min-width: 280px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .score-display { font-size: 4rem; color: #00ff88; font-weight: 800; margin: 0; line-height: 1; }
-        .divider { height: 4px; width: 60px; background: #333; margin: 15px auto; border-radius: 10px; }
-        .name-label { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 4px; color: #888; margin-bottom: 30px; }
-        .task-item { 
-            display: flex; align-items: center; background: #252525; padding: 15px; 
-            margin-bottom: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
-        }
-        .task-item:hover { border-color: #00ff88; transform: translateY(-2px); }
-        .task-item.done { opacity: 0.2; text-decoration: line-through; pointer-events: none; filter: grayscale(1); }
-        .task-check { width: 22px; height: 22px; margin-right: 15px; border: 2px solid #00ff88; border-radius: 6px; }
-        .task-info { flex-grow: 1; text-align: left; }
-        .pts-tag { color: #ffd700; font-weight: bold; font-size: 0.85rem; }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .leaderboard { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; }
+        .player-column { background: #161616; padding: 25px; border-radius: 20px; min-width: 300px; border: 1px solid #222; }
+        .score { font-size: 4rem; color: #00ff88; font-weight: bold; margin: 0; }
+        .task-card { background: #222; padding: 15px; margin-top: 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; border-left: 5px solid #00ff88; }
+        .task-card:hover { background: #2a2a2a; }
+        .check { width: 20px; height: 20px; border: 2px solid #00ff88; margin-right: 15px; border-radius: 4px; }
+        .form-link { background: #00ff88; color: black; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; margin-bottom: 30px; }
     </style>
 </head>
 <body>
 
-    <h1 style="color:#333; letter-spacing: 10px; margin-bottom: 0;">ARENA</h1>
+    <a href="https://forms.gle/ckCAEpauuLvzRmSj8" target="_blank" class="form-link">CREATE NEW TASK +</a>
 
-    <div class="leaderboard" id="arena">Loading...</div>
-
-<script>
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwisVReDExkvZLIHyJQNw362OMk0zy2X9KxQhxGbXnoex0gAdYH_x7-yfE4inqL5V5SJA/exec'
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Arena | Live Sync</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <style>
-        body { background: #0f0f0f; color: white; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .leaderboard { display: flex; gap: 30px; justify-content: center; width: 100%; flex-wrap: wrap; margin-top: 30px; }
-        .player-column { background: #1a1a1a; padding: 25px; border-radius: 20px; min-width: 280px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .score-display { font-size: 4rem; color: #00ff88; font-weight: 800; margin: 0; line-height: 1; }
-        .divider { height: 4px; width: 60px; background: #333; margin: 15px auto; border-radius: 10px; }
-        .name-label { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 4px; color: #888; margin-bottom: 30px; }
-        .task-item { 
-            display: flex; align-items: center; background: #252525; padding: 15px; 
-            margin-bottom: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
-        }
-        .task-item:hover { border-color: #00ff88; transform: translateY(-2px); }
-        .task-item.done { opacity: 0.2; text-decoration: line-through; pointer-events: none; filter: grayscale(1); }
-        .task-check { width: 22px; height: 22px; margin-right: 15px; border: 2px solid #00ff88; border-radius: 6px; }
-        .task-info { flex-grow: 1; text-align: left; }
-        .pts-tag { color: #ffd700; font-weight: bold; font-size: 0.85rem; }
-    </style>
-</head>
-<body>
-
-    <h1 style="color:#333; letter-spacing: 10px; margin-bottom: 0;">ARENA</h1>
-
-    <div class="leaderboard" id="arena">Loading...</div>
+    <div class="leaderboard" id="arena">Loading Arena...</div>
 
 <script>
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwisVReDExkvZLIHyJQNw362OMk0zy2X9KxQhxGbXnoex0gAdYH_x7-yfE4inqL5V5SJA/exec'; // The one from Step 1
+    const LIVE_TASKS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv';
+    const TALLY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=0&single=true&output=csv';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxVQEubkC7opGHCflAizfLVezAhG0gFy5mEIS7qmpTz8scvvj4P9K4GNPmFc_rCh_hCHQ/exec';
 
-    async function init() {
-        const response = await fetch(CSV_URL);
-        const csv = await response.text();
-        Papa.parse(csv, {
-            header: true,
-            complete: (results) => render(results.data)
-        });
+    async function refresh() {
+        const [taskRes, tallyRes] = await Promise.all([fetch(LIVE_TASKS_CSV), fetch(TALLY_CSV)]);
+        const taskText = await taskRes.text();
+        const tallyText = await tallyRes.text();
+
+        Papa.parse(taskText, { header: true, complete: (tasks) => {
+            Papa.parse(tallyText, { header: true, complete: (tallies) => {
+                render(tasks.data, tallies.data);
+            }});
+        }});
     }
 
-    function render(data) {
-        const container = document.getElementById('arena');
-        let totals = { "Isabella": 0, "Liv": 0 };
-        let activeTasks = { "Isabella": [], "Liv": [] };
+    function render(tasks, tallies) {
+        let scores = { "Isabella": 0, "Liv": 0 };
+        let boards = { "Isabella": [], "Liv": [] };
 
-        data.forEach(row => {
+        // Calculate Totals from Tally Tab
+        tallies.forEach(row => {
+            if (scores.hasOwnProperty(row.Name)) scores[row.Name] += parseInt(row.Points) || 0;
+        });
+
+        // Failure to Rest Penalty
+        Object.keys(scores).forEach(n => { if(scores[n] >= 200) scores[n] -= 10; });
+
+        // Build Active Task Lists
+        tasks.forEach(row => {
             const name = row["Who are you?"];
-            const task = row["Task Name"];
-            const pts = parseInt(row["Points"]) || 0;
-
-            if (!name) return;
-
-            // If it's a completion log (from the script), add to total
-            if (task === "COMPLETED_TASK") {
-                totals[name] += pts;
-            } else {
-                // If it's a new task (from the Form), add to the list
-                activeTasks[name].push({ text: task, pts: pts });
+            if (boards.hasOwnProperty(name)) {
+                boards[name].push({ task: row["Task Name"], pts: row["Points"] });
             }
         });
 
+        const container = document.getElementById('arena');
         container.innerHTML = '';
-        Object.keys(totals).forEach(name => {
-            let tasksHtml = activeTasks[name].map(t => `
-                <div class="task-item" onclick="saveCompletion('${name}', ${t.pts}, this)">
-                    <div class="task-check"></div>
-                    <div class="task-info"><div>${t.text}</div><span class="pts-tag">${t.pts} PTS</span></div>
+
+        Object.keys(scores).forEach(name => {
+            let taskHtml = boards[name].map(t => `
+                <div class="task-card" onclick="complete('${name}', '${t.task}', ${t.pts}, this)">
+                    <div class="check"></div>
+                    <div><b>${t.task}</b><br><small>${t.pts} PTS</small></div>
                 </div>
             `).join('');
 
             container.innerHTML += `
                 <div class="player-column">
-                    <p class="score-display">${totals[name]}</p>
-                    <div class="divider"></div>
-                    <p class="name-label">${name}</p>
-                    <div>${tasksHtml || '<p style="color:#333">Ready</p>'}</div>
+                    <p class="score">${scores[name]}</p>
+                    <hr style="border: 1px solid #333">
+                    <h2 style="letter-spacing:3px; color:#666">${name}</h2>
+                    <div>${taskHtml || '<p style="color:#444">No active tasks</p>'}</div>
                 </div>
             `;
         });
     }
 
-    async function saveCompletion(name, pts, element) {
-        // 1. Instantly fade the task on screen
-        element.classList.add('done');
-
-        // 2. Send to Google Sheets to save permanently
-        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}`);
-        
-        // 3. Refresh the score from the sheet after a short delay
-        setTimeout(init, 1500);
+    function complete(name, task, pts, el) {
+        el.style.opacity = '0.2';
+        el.style.pointerEvents = 'none';
+        // Send to Script to save points and delete the "Live" task
+        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}&task=${encodeURIComponent(task)}`, {mode: 'no-cors'});
+        setTimeout(refresh, 2000);
     }
 
-    init();
-    setInterval(init, 30000); // Sync every 30 seconds
-</script>
-</body>
-</html>'; // The one from Step 1
-
-    async function init() {
-        const response = await fetch(CSV_URL);
-        const csv = await response.text();
-        Papa.parse(csv, {
-            header: true,
-            complete: (results) => render(results.data)
-        });
-    }
-
-    function render(data) {
-        const container = document.getElementById('arena');
-        let totals = { "Isabella": 0, "Liv": 0 };
-        let activeTasks = { "Isabella": [], "Liv": [] };
-
-        data.forEach(row => {
-            const name = row["Who are you?"];
-            const task = row["Task Name"];
-            const pts = parseInt(row["Points"]) || 0;
-
-            if (!name) return;
-
-            // If it's a completion log (from the script), add to total
-            if (task === "COMPLETED_TASK") {
-                totals[name] += pts;
-            } else {
-                // If it's a new task (from the Form), add to the list
-                activeTasks[name].push({ text: task, pts: pts });
-            }
-        });
-
-        container.innerHTML = '';
-        Object.keys(totals).forEach(name => {
-            let tasksHtml = activeTasks[name].map(t => `
-                <div class="task-item" onclick="saveCompletion('${name}', ${t.pts}, this)">
-                    <div class="task-check"></div>
-                    <div class="task-info"><div>${t.text}</div><span class="pts-tag">${t.pts} PTS</span></div>
-                </div>
-            `).join('');
-
-            container.innerHTML += `
-                <div class="player-column">
-                    <p class="score-display">${totals[name]}</p>
-                    <div class="divider"></div>
-                    <p class="name-label">${name}</p>
-                    <div>${tasksHtml || '<p style="color:#333">Ready</p>'}</div>
-                </div>
-            `;
-        });
-    }
-
-    async function saveCompletion(name, pts, element) {
-        // 1. Instantly fade the task on screen
-        element.classList.add('done');
-
-        // 2. Send to Google Sheets to save permanently
-        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}`);
-        
-        // 3. Refresh the score from the sheet after a short delay
-        setTimeout(init, 1500);
-    }
-
-    init();
-    setInterval(init, 30000); // Sync every 30 seconds
+    refresh();
+    setInterval(refresh, 30000);
 </script>
 </body>
 </html>

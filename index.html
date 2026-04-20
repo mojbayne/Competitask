@@ -3,210 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Arena | Leaderboard</title>
+    <title>Task Arena | Live Sync</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --green: #00ff88;
-            --gold: #FFD700;
-            --text: #ffffff;
+        body { background: #0f0f0f; color: white; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .leaderboard { display: flex; gap: 30px; justify-content: center; width: 100%; flex-wrap: wrap; margin-top: 30px; }
+        .player-column { background: #1a1a1a; padding: 25px; border-radius: 20px; min-width: 280px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .score-display { font-size: 4rem; color: #00ff88; font-weight: 800; margin: 0; line-height: 1; }
+        .divider { height: 4px; width: 60px; background: #333; margin: 15px auto; border-radius: 10px; }
+        .name-label { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 4px; color: #888; margin-bottom: 30px; }
+        .task-item { 
+            display: flex; align-items: center; background: #252525; padding: 15px; 
+            margin-bottom: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
         }
-
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* All-Time Scores in the Corners */
-        #isa-total {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(30, 30, 30, 0.8);
-            padding: 10px 15px;
-            border-radius: 10px;
-            border-left: 4px solid var(--gold);
-            font-weight: bold;
-        }
-
-        #liv-total {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(30, 30, 30, 0.8);
-            padding: 10px 15px;
-            border-radius: 10px;
-            border-right: 4px solid var(--gold);
-            font-weight: bold;
-        }
-
-        .score-val {
-            color: var(--gold);
-            font-size: 1.4em;
-            display: block;
-        }
-
-        /* Center Feed */
-        .container {
-            margin-top: 120px;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-        }
-
-        h1 {
-            color: var(--green);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            font-size: 1.5em;
-            margin-bottom: 30px;
-        }
-
-        #app {
-            background: var(--card);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .log-entry {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #333;
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        .log-entry:last-child { border-bottom: none; }
-
-        .entry-name {
-            color: var(--green);
-            font-weight: bold;
-            flex: 1;
-            text-align: left;
-        }
-
-        .entry-task {
-            flex: 2;
-            color: #bbb;
-            font-size: 0.9em;
-        }
-
-        .entry-pts {
-            flex: 1;
-            text-align: right;
-            font-weight: bold;
-            color: var(--text);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .task-item:hover { border-color: #00ff88; transform: translateY(-2px); }
+        .task-item.done { opacity: 0.2; text-decoration: line-through; pointer-events: none; filter: grayscale(1); }
+        .task-check { width: 22px; height: 22px; margin-right: 15px; border: 2px solid #00ff88; border-radius: 6px; }
+        .task-info { flex-grow: 1; text-align: left; }
+        .pts-tag { color: #ffd700; font-weight: bold; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
-    <div id="isa-total">
-        ISABELLA
-        <span id="isa-score" class="score-val">0</span>
-    </div>
+    <h1 style="color:#333; letter-spacing: 10px; margin-bottom: 0;">ARENA</h1>
 
-    <div id="liv-total">
-        LIV
-        <span id="liv-score" class="score-val">0</span>
-    </div>
-
-    <div class="container">
-        <h1>Recent Activity</h1>
-        <div id="app">Initializing...</div>
-    </div>
+    <div class="leaderboard" id="arena">Loading...</div>
 
 <script>
-    // 1. PASTE YOUR PUBLISHED CSV LINK HERE
-    const CSV_URL = 'PASTE_YOUR_LINK_HERE';
-
-    async function fetchData() {
-        try {
-            const response = await fetch(CSV_URL);
-            const csvText = await response.text();
-            
-            Papa.parse(csvText, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    renderLeaderboard(results.data);
-                }
-            });
-        } catch (err) {
-            document.getElementById('app').innerHTML = "Connection Error. Check CSV Link.";
+    const CSV_URL = 'PASTE_YOUR_CSV_LINK_HERE';
+    const SCRIPT_URL = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Arena | Live Sync</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body { background: #0f0f0f; color: white; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .leaderboard { display: flex; gap: 30px; justify-content: center; width: 100%; flex-wrap: wrap; margin-top: 30px; }
+        .player-column { background: #1a1a1a; padding: 25px; border-radius: 20px; min-width: 280px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .score-display { font-size: 4rem; color: #00ff88; font-weight: 800; margin: 0; line-height: 1; }
+        .divider { height: 4px; width: 60px; background: #333; margin: 15px auto; border-radius: 10px; }
+        .name-label { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 4px; color: #888; margin-bottom: 30px; }
+        .task-item { 
+            display: flex; align-items: center; background: #252525; padding: 15px; 
+            margin-bottom: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
         }
+        .task-item:hover { border-color: #00ff88; transform: translateY(-2px); }
+        .task-item.done { opacity: 0.2; text-decoration: line-through; pointer-events: none; filter: grayscale(1); }
+        .task-check { width: 22px; height: 22px; margin-right: 15px; border: 2px solid #00ff88; border-radius: 6px; }
+        .task-info { flex-grow: 1; text-align: left; }
+        .pts-tag { color: #ffd700; font-weight: bold; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+    <h1 style="color:#333; letter-spacing: 10px; margin-bottom: 0;">ARENA</h1>
+
+    <div class="leaderboard" id="arena">Loading...</div>
+
+<script>
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?output=csv';
+    const SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE'; // The one from Step 1
+
+    async function init() {
+        const response = await fetch(CSV_URL);
+        const csv = await response.text();
+        Papa.parse(csv, {
+            header: true,
+            complete: (results) => render(results.data)
+        });
     }
 
-    function renderLeaderboard(data) {
-        let isaTotal = 0;
-        let livTotal = 0;
-        let html = '';
+    function render(data) {
+        const container = document.getElementById('arena');
+        let totals = { "Isabella": 0, "Liv": 0 };
+        let activeTasks = { "Isabella": [], "Liv": [] };
 
-        // We process all data for totals, then reverse for display
-        const rows = data.slice(); 
+        data.forEach(row => {
+            const name = row["Who are you?"];
+            const task = row["Task Name"];
+            const pts = parseInt(row["Points"]) || 0;
 
-        rows.forEach(row => {
-            const values = Object.values(row);
-            
-            // MAP: A=Timestamp(0), B=Name(1), C=Points(2), D=Task(3)
-            const name = values[1] ? values[1].toString().trim() : "";
-            const pts = parseInt(values[2]) || 0;
-            const task = values[3] || "";
+            if (!name) return;
 
-            // Skip header or empty rows
-            if (!name || name.toLowerCase() === "name" || name.toLowerCase() === "who are you?") return;
-
-            // Calculate Totals
-            const checkName = name.toLowerCase();
-            if (checkName === "isabella") isaTotal += pts;
-            if (checkName === "liv") livTotal += pts;
+            // If it's a completion log (from the script), add to total
+            if (task === "COMPLETED_TASK") {
+                totals[name] += pts;
+            } else {
+                // If it's a new task (from the Form), add to the list
+                activeTasks[name].push({ text: task, pts: pts });
+            }
         });
 
-        // Create the list (Newest first)
-        const displayRows = rows.reverse().slice(0, 15); // Show last 15 entries
-        displayRows.forEach(row => {
-            const values = Object.values(row);
-            const name = values[1] ? values[1].toString().trim() : "";
-            const pts = parseInt(values[2]) || 0;
-            const task = values[3] || "Task";
+        container.innerHTML = '';
+        Object.keys(totals).forEach(name => {
+            let tasksHtml = activeTasks[name].map(t => `
+                <div class="task-item" onclick="saveCompletion('${name}', ${t.pts}, this)">
+                    <div class="task-check"></div>
+                    <div class="task-info"><div>${t.text}</div><span class="pts-tag">${t.pts} PTS</span></div>
+                </div>
+            `).join('');
 
-            if (!name || name.toLowerCase() === "name" || name.toLowerCase() === "who are you?") return;
-
-            html += `
-                <div class="log-entry">
-                    <span class="entry-name">${name}</span>
-                    <span class="entry-task">${task}</span>
-                    <span class="entry-pts">+${pts}</span>
+            container.innerHTML += `
+                <div class="player-column">
+                    <p class="score-display">${totals[name]}</p>
+                    <div class="divider"></div>
+                    <p class="name-label">${name}</p>
+                    <div>${tasksHtml || '<p style="color:#333">Ready</p>'}</div>
                 </div>
             `;
         });
-
-        // Update UI
-        document.getElementById('isa-score').innerText = isaTotal;
-        document.getElementById('liv-score').innerText = livTotal;
-        document.getElementById('app').innerHTML = html || "No entries found.";
     }
 
-    // Load on start
-    window.addEventListener('DOMContentLoaded', fetchData);
-    // Auto-refresh every 60 seconds
-    setInterval(fetchData, 60000);
-</script>
+    async function saveCompletion(name, pts, element) {
+        // 1. Instantly fade the task on screen
+        element.classList.add('done');
 
+        // 2. Send to Google Sheets to save permanently
+        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}`);
+        
+        // 3. Refresh the score from the sheet after a short delay
+        setTimeout(init, 1500);
+    }
+
+    init();
+    setInterval(init, 30000); // Sync every 30 seconds
+</script>
+</body>
+</html>'; // The one from Step 1
+
+    async function init() {
+        const response = await fetch(CSV_URL);
+        const csv = await response.text();
+        Papa.parse(csv, {
+            header: true,
+            complete: (results) => render(results.data)
+        });
+    }
+
+    function render(data) {
+        const container = document.getElementById('arena');
+        let totals = { "Isabella": 0, "Liv": 0 };
+        let activeTasks = { "Isabella": [], "Liv": [] };
+
+        data.forEach(row => {
+            const name = row["Who are you?"];
+            const task = row["Task Name"];
+            const pts = parseInt(row["Points"]) || 0;
+
+            if (!name) return;
+
+            // If it's a completion log (from the script), add to total
+            if (task === "COMPLETED_TASK") {
+                totals[name] += pts;
+            } else {
+                // If it's a new task (from the Form), add to the list
+                activeTasks[name].push({ text: task, pts: pts });
+            }
+        });
+
+        container.innerHTML = '';
+        Object.keys(totals).forEach(name => {
+            let tasksHtml = activeTasks[name].map(t => `
+                <div class="task-item" onclick="saveCompletion('${name}', ${t.pts}, this)">
+                    <div class="task-check"></div>
+                    <div class="task-info"><div>${t.text}</div><span class="pts-tag">${t.pts} PTS</span></div>
+                </div>
+            `).join('');
+
+            container.innerHTML += `
+                <div class="player-column">
+                    <p class="score-display">${totals[name]}</p>
+                    <div class="divider"></div>
+                    <p class="name-label">${name}</p>
+                    <div>${tasksHtml || '<p style="color:#333">Ready</p>'}</div>
+                </div>
+            `;
+        });
+    }
+
+    async function saveCompletion(name, pts, element) {
+        // 1. Instantly fade the task on screen
+        element.classList.add('done');
+
+        // 2. Send to Google Sheets to save permanently
+        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}`);
+        
+        // 3. Refresh the score from the sheet after a short delay
+        setTimeout(init, 1500);
+    }
+
+    init();
+    setInterval(init, 30000); // Sync every 30 seconds
+</script>
 </body>
 </html>

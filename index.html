@@ -2,59 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dynamic Arena</title>
+    <title>Dynamic Arena | V3 Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        body { background: #0a0a0a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .leaderboard { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; }
-        .player-column { background: #161616; padding: 25px; border-radius: 20px; min-width: 300px; border: 1px solid #222; }
-        .score { font-size: 4rem; color: #00ff88; font-weight: bold; margin: 0; }
-        .task-card { background: #222; padding: 15px; margin-top: 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; border-left: 5px solid #00ff88; }
-        .task-card:hover { background: #2a2a2a; }
-        .check { width: 20px; height: 20px; border: 2px solid #00ff88; margin-right: 15px; border-radius: 4px; }
-        .form-link { background: #00ff88; color: black; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; margin-bottom: 30px; }
+        body { background: #0a0a0a; color: white; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .leaderboard { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; margin-top: 20px; }
+        .player-column { background: #161616; padding: 25px; border-radius: 20px; min-width: 300px; border: 1px solid #222; text-align: center; }
+        .score { font-size: 5rem; color: #00ff88; font-weight: 900; margin: 0; line-height: 1; }
+        .name-label { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 5px; color: #666; margin: 20px 0; }
+        .task-card { background: #222; padding: 15px; margin-top: 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; border-left: 5px solid #00ff88; transition: 0.2s; }
+        .task-card:hover { background: #2a2a2a; transform: translateY(-2px); }
+        .check { width: 22px; height: 22px; border: 2px solid #00ff88; margin-right: 15px; border-radius: 6px; }
+        .task-info { text-align: left; flex-grow: 1; }
+        .pts-tag { color: #ffd700; font-weight: bold; font-size: 0.8rem; }
+        .form-link { background: #00ff88; color: black; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
-    <a href="https://forms.gle/ckCAEpauuLvzRmSj8" target="_blank" class="form-link">CREATE NEW TASK +</a>
+    <a href="https://forms.gle/MTci5T7bc5JULdgH9" target="_blank" class="form-link">Create New Task +</a>
 
-    <div class="leaderboard" id="arena">Loading Arena...</div>
+    <div class="leaderboard" id="arena">Syncing...</div>
 
 <script>
-    const LIVE_TASKS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv';
+    // --- PASTE YOUR LINKS HERE ---
+    const LIVE_TASKS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv'; 
     const TALLY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=0&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxVQEubkC7opGHCflAizfLVezAhG0gFy5mEIS7qmpTz8scvvj4P9K4GNPmFc_rCh_hCHQ/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGpGNeEHRA6TaEONuGIUrkmHIBXJmf6DIy5y1NTLZm3GKlXJPAkgwyA6padN-wHERN-A/exec';
 
     async function refresh() {
-        const [taskRes, tallyRes] = await Promise.all([fetch(LIVE_TASKS_CSV), fetch(TALLY_CSV)]);
-        const taskText = await taskRes.text();
-        const tallyText = await tallyRes.text();
+        try {
+            const [taskRes, tallyRes] = await Promise.all([fetch(LIVE_TASKS_CSV), fetch(TALLY_CSV)]);
+            const taskText = await taskRes.text();
+            const tallyText = await tallyRes.text();
 
-        Papa.parse(taskText, { header: true, complete: (tasks) => {
-            Papa.parse(tallyText, { header: true, complete: (tallies) => {
-                render(tasks.data, tallies.data);
+            Papa.parse(taskText, { header: false, skipEmptyLines: true, complete: (tasks) => {
+                Papa.parse(tallyText, { header: false, skipEmptyLines: true, complete: (tallies) => {
+                    render(tasks.data, tallies.data);
+                }});
             }});
-        }});
+        } catch (e) { console.error("Sync Error"); }
     }
 
     function render(tasks, tallies) {
         let scores = { "Isabella": 0, "Liv": 0 };
         let boards = { "Isabella": [], "Liv": [] };
 
-        // Calculate Totals from Tally Tab
-        tallies.forEach(row => {
-            if (scores.hasOwnProperty(row.Name)) scores[row.Name] += parseInt(row.Points) || 0;
+        // 1. Calculate Totals from Tally Tab
+        // Column Index: 1 = Name, 2 = Points
+        tallies.forEach((row, i) => {
+            if (i === 0) return; // Skip header
+            const name = row[1] ? row[1].trim() : "";
+            const pts = parseInt(row[2]) || 0;
+            if (scores.hasOwnProperty(name)) scores[name] += pts;
         });
 
-        // Failure to Rest Penalty
+        // Failure to Rest Penalty (Checks if score is 200+)
         Object.keys(scores).forEach(n => { if(scores[n] >= 200) scores[n] -= 10; });
 
-        // Build Active Task Lists
-        tasks.forEach(row => {
-            const name = row["Who are you?"];
+        // 2. Build Active Task Lists from LiveTasks Tab
+        // Column Index: 1 = Who, 2 = Task Name, 3 = Points
+        tasks.forEach((row, i) => {
+            if (i === 0) return; // Skip header
+            const name = row[1] ? row[1].trim() : "";
+            const taskContent = row[2] || "Task";
+            const taskPoints = row[3] || 0;
+
             if (boards.hasOwnProperty(name)) {
-                boards[name].push({ task: row["Task Name"], pts: row["Points"] });
+                boards[name].push({ task: taskContent, pts: taskPoints });
             }
         });
 
@@ -65,26 +80,32 @@
             let taskHtml = boards[name].map(t => `
                 <div class="task-card" onclick="complete('${name}', '${t.task}', ${t.pts}, this)">
                     <div class="check"></div>
-                    <div><b>${t.task}</b><br><small>${t.pts} PTS</small></div>
+                    <div class="task-info">
+                        <div style="font-weight:bold">${t.task}</div>
+                        <span class="pts-tag">+${t.pts} PTS</span>
+                    </div>
                 </div>
             `).join('');
 
             container.innerHTML += `
                 <div class="player-column">
                     <p class="score">${scores[name]}</p>
-                    <hr style="border: 1px solid #333">
-                    <h2 style="letter-spacing:3px; color:#666">${name}</h2>
-                    <div>${taskHtml || '<p style="color:#444">No active tasks</p>'}</div>
+                    <div style="height:4px; background:#333; width:40px; margin:15px auto; border-radius:10px;"></div>
+                    <h2 class="name-label">${name}</h2>
+                    <div>${taskHtml || '<p style="color:#333; font-style:italic">No active tasks</p>'}</div>
                 </div>
             `;
         });
     }
 
     function complete(name, task, pts, el) {
-        el.style.opacity = '0.2';
+        el.style.opacity = '0.1';
         el.style.pointerEvents = 'none';
-        // Send to Script to save points and delete the "Live" task
+        
+        // This sends the completion to your Apps Script
         fetch(`${SCRIPT_URL}?name=${name}&points=${pts}&task=${encodeURIComponent(task)}`, {mode: 'no-cors'});
+        
+        // Refresh after 2 seconds to allow the database to update
         setTimeout(refresh, 2000);
     }
 

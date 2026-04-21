@@ -140,7 +140,7 @@
         if(LIVE_CSV.includes('PASTE')) return;
         try {
             const [taskRes, tallyRes] = await Promise.all([fetch(LIVE_CSV), fetch(TALLY_CSV)]);
-            const tasks = Papa.parse(await taskRes.text(), {header:true}).data;
+            const tasks = Papa.parse(await r1.text(), {header: false, skipEmptyLines: true}).data;
             const tallies = Papa.parse(await tallyRes.text(), {header:true}).data;
             render(tasks, tallies);
         } catch (e) { console.log("Database Syncing..."); }
@@ -171,17 +171,32 @@
 
     // 2. Process Live Tasks
     tasks.forEach((row, i) => {
-        if (i === 0 || row.length < 4) return;
-        const name = row[1] ? row[1].trim() : "";
-        const taskText = row[2];
-        const pts = row[3];
-        const cat = row[4] ? row[4].trim() : "Workload"; // Default to Workload if empty
-        const status = row[5] ? row[5].trim() : "";
+    // 1. Skip the header row (Row 1)
+    if (i === 0) return;
 
-        if (status.toLowerCase() !== "completed" && taskGroups[cat]) {
-            taskGroups[cat].push({ name, taskText, pts, cat });
-        }
-    });
+    // 2. Safety check: Does this row have at least a Name and Task?
+    if (!row[1] || !row[2]) return;
+
+    // 3. Status Check: Only skip if it explicitly says "Completed"
+    // If Column F (row[5]) is empty, it will NOT be skipped.
+    const status = (row[5] || "").trim().toLowerCase();
+    if (status === "completed") return;
+
+    // 4. Map the data to the correct boxes
+    const person   = row[1].trim();
+    const taskName = row[2].trim();
+    const points   = row[3] || "0";
+    const category = (row[4] || "Workload").trim();
+
+    if (groups[category]) {
+        groups[category].push({ 
+            name: person, 
+            task: taskName, 
+            pts: points, 
+            cat: category 
+        });
+    }
+});
 
     // Update the Leaderboard Display
     document.getElementById('leaderboard-content').innerHTML = Object.keys(stats).map(key => `

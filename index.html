@@ -212,17 +212,22 @@
 }
 
     function renderCategory(containerId, tasks, cssClass) {
-        document.getElementById(containerId).innerHTML = tasks.map(t => `
-            <div class="task-card ${cssClass}" onclick="completeTask('${t['Who are you?']}', '${t['Task Name']}', ${t.Points}, '${t.Category}', this)">
-                <div class="check-circle"></div>
-                <div class="task-info">
-                    <div style="font-weight:600; font-size:1.1rem;">${t['Task Name']}</div>
-                    <div style="color:#555; font-size:0.8rem; margin-top:2px;">${t['Who are you?']}</div>
+    // Sort tasks alphabetically by name so Isabella's are grouped and Liv's are grouped
+    tasks.sort((a, b) => a.name.localeCompare(b.name));
+
+    document.getElementById(containerId).innerHTML = tasks.map(t => `
+        <div class="task-card ${cssClass}" onclick="completeTask('${t.name}', '${t.taskText}', ${t.pts}, '${t.cat}', this)">
+            <div class="check-circle"></div>
+            <div class="task-info">
+                <div style="font-weight:600; font-size:1.1rem;">${t.taskText}</div>
+                <div style="color:${t.name === 'Isabella' ? '#ffd700' : '#ff85a2'}; font-size:0.8rem; font-weight:bold; text-transform:uppercase;">
+                    ${t.name}
                 </div>
-                <div class="pts-badge">+${t.Points}</div>
             </div>
-        `).join('') || '<p style="text-align:center; color:#333; margin-top:50px;">No active tasks here.</p>';
-    }
+            <div class="pts-badge">+${t.pts}</div>
+        </div>
+    `).join('') || '<p style="text-align:center; color:#333; margin-top:50px;">Nothing pending.</p>';
+}
 
     function completeTask(name, task, pts, cat, el) {
         el.classList.add('completed');

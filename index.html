@@ -2,147 +2,207 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Competitask</title>
+    <title>The Arena | Elite Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #0a0a0a; --accent: #00ff88; --card: #161616; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        
-        /* The "Blanket Button" and Form Area */
-        .admin-controls { margin-bottom: 30px; text-align: center; width: 100%; max-width: 600px; }
-        .form-link { background: var(--accent); color: black; padding: 12px 25px; text-decoration: none; border-radius: 50px; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; }
-        #form-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; background: #111; border-radius: 20px; margin-top: 15px; }
-        #form-wrapper.open { max-height: 800px; padding: 20px 0; }
+        :root { 
+            --bg: #0a0a0a; 
+            --selfcare: #ff85a2; 
+            --spiritual: #00ff88; 
+            --workload: #4dabff; 
+            --stats: #ffd700;
+            --card: #161616;
+        }
 
-        .leaderboard { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; width: 100%; }
-        .player-column { background: var(--card); padding: 30px; border-radius: 25px; min-width: 300px; border: 1px solid #222; text-align: center; }
-        
-        .score { font-size: 5rem; color: var(--accent); font-weight: 900; margin: 0; }
-        .name-label { font-size: 2rem; text-transform: uppercase; letter-spacing: 5px; color: #555; margin: 15px 0; }
+        body { 
+            background: var(--bg); color: white; 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            margin: 0; padding-bottom: 90px; 
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        /* The "Blanking Out" Animation */
+        /* Bottom Sticky Nav */
+        .bottom-nav { 
+            position: fixed; bottom: 0; width: 100%; height: 75px; 
+            background: #111; display: flex; justify-content: space-around; 
+            align-items: center; border-top: 1px solid #222; z-index: 1000;
+        }
+        .nav-item { 
+            border: none; background: none; color: #444; 
+            font-size: 0.65rem; text-transform: uppercase; cursor: pointer; 
+            display: flex; flex-direction: column; align-items: center;
+            letter-spacing: 1px; transition: 0.3s;
+        }
+        .nav-item.active.sc { color: var(--selfcare); }
+        .nav-item.active.sh { color: var(--spiritual); }
+        .nav-item.active.wl { color: var(--workload); }
+        .nav-item.active.st { color: var(--stats); }
+        .nav-icon { font-size: 1.6rem; margin-bottom: 4px; }
+
+        /* Pages */
+        .page { display: none; padding: 25px; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { font-size: 1.8rem; margin-bottom: 25px; letter-spacing: -1px; }
+
+        /* Stats Page Specifics */
+        .form-trigger {
+            background: var(--stats); color: black; border: none;
+            padding: 18px; width: 100%; border-radius: 18px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 25px; cursor: pointer;
+        }
+        #form-container { background: #111; border-radius: 20px; overflow: hidden; margin-bottom: 25px; }
+
+        .player-header { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #222; }
+        .big-score { font-size: 3.5rem; font-weight: 900; margin: 0; line-height: 1; color: var(--stats); }
+        .score-label { color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; margin-top: 5px; }
+
+        /* Task Cards */
         .task-card { 
-            background: #222; padding: 18px; margin-top: 12px; border-radius: 15px; 
-            cursor: pointer; display: flex; align-items: center; border-left: 6px solid var(--accent);
-            transition: all 0.4s ease;
-            font-size: 1.3rem;
+            background: var(--card); padding: 18px; margin-bottom: 12px; 
+            border-radius: 18px; display: flex; align-items: center; 
+            border: 1px solid #222; transition: all 0.3s ease;
         }
-        .task-card:hover { transform: scale(1.02); background: #282828; }
+        .task-card.sc { border-left: 6px solid var(--selfcare); }
+        .task-card.sh { border-left: 6px solid var(--spiritual); }
+        .task-card.wl { border-left: 6px solid var(--workload); }
         
-        /* This is the "Blanked Out" state after ticking */
-        .task-card.completed { 
-            opacity: 0; 
-            transform: scale(0.9); 
-            pointer-events: none; 
-            margin-top: -60px; /* Slides the other tasks up to fill the gap */
-        }
+        .task-card.completed { opacity: 0; transform: translateX(50px); pointer-events: none; }
 
-        .check { width: 22px; height: 22px; border: 2px solid var(--accent); margin-right: 15px; border-radius: 6px; }
-        .task-info { text-align: left; flex-grow: 1; }
-        .pts-tag { color: #ffd700; font-weight: bold; font-size: 1rem; }
+        .check-circle { width: 24px; height: 24px; border: 2px solid #333; border-radius: 50%; margin-right: 15px; flex-shrink: 0; }
+        .task-info { flex-grow: 1; }
+        .pts-badge { background: #222; padding: 4px 8px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; color: #888; }
+
+        .chart-box { background: var(--card); padding: 20px; border-radius: 22px; height: 300px; margin-top: 20px; border: 1px solid #222; }
     </style>
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="mobile-web-app-capable" content="yes">
-        <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <div class="admin-controls">
-        <button class="form-link" onclick="toggleForm()">Create New Task +</button>
-        <div id="form-wrapper">
-            <iframe src="https://forms.gle/PrEQqYwBCdn8MGhh8" width="100%" height="600" frameborder="0">Loading…</iframe>
-            <button onclick="toggleForm()" style="background:none; border:1px solid #444; color:#666; margin-top:10px; cursor:pointer; padding:5px 15px; border-radius:20px;">Close Form</button>
-        </div>
+    <div id="SelfCarePage" class="page">
+        <h1 style="color:var(--selfcare)">Self Care</h1>
+        <div id="sc-list"></div>
     </div>
 
-    <div class="leaderboard" id="arena">Syncing Arena...</div>
+    <div id="SpiritualPage" class="page">
+        <h1 style="color:var(--spiritual)">Spiritual Health</h1>
+        <div id="sh-list"></div>
+    </div>
+
+    <div id="WorkloadPage" class="page">
+        <h1 style="color:var(--workload)">Workload</h1>
+        <div id="wl-list"></div>
+    </div>
+
+    <div id="StatsPage" class="page active">
+        <h1 style="color:var(--stats)">The Arena</h1>
+        
+        <button class="form-trigger" onclick="toggleForm()">+ New Task</button>
+        
+        <div id="form-container" style="display:none;">
+            <iframe src="https://forms.gle/M4ghAGdo5DvrfpJB9" width="100%" height="550" frameborder="0">Loading…</iframe>
+            <button onclick="toggleForm()" style="background:none; border:none; color:#444; width:100%; padding:15px; font-weight:bold;">Close Window</button>
+        </div>
+
+        <div id="leaderboard-content"></div>
+        <div class="chart-box"><canvas id="weeklyChart"></canvas></div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item sc" onclick="showPage('SelfCarePage', 'sc')"><span class="nav-icon">🌸</span>Care</button>
+        <button class="nav-item sh" onclick="showPage('SpiritualPage', 'sh')"><span class="nav-icon">✨</span>Spirit</button>
+        <button class="nav-item wl" onclick="showPage('WorkloadPage', 'wl')"><span class="nav-icon">📚</span>Work</button>
+        <button class="nav-item active st" onclick="showPage('StatsPage', 'st')"><span class="nav-icon">📊</span>Stats</button>
+    </nav>
 
 <script>
-    const LIVE_TASKS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv'; 
+    const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv';
     const TALLY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=0&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGpGNeEHRA6TaEONuGIUrkmHIBXJmf6DIy5y1NTLZm3GKlXJPAkgwyA6padN-wHERN-A/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwe2i08weEFwuFtkBktSLe62AaUjVOskuF5WykGlJzXjlajz6gm1g6wqLeJ2YmXKUvz-g/exec';
 
     function toggleForm() {
-        document.getElementById('form-wrapper').classList.toggle('open');
+        const f = document.getElementById('form-container');
+        f.style.display = (f.style.display === 'none') ? 'block' : 'none';
     }
 
-    async function refresh() {
-        try {
-            const [taskRes, tallyRes] = await Promise.all([fetch(LIVE_TASKS_CSV), fetch(TALLY_CSV)]);
-            const taskText = await taskRes.text();
-            const tallyText = await tallyRes.text();
+    function showPage(pageId, navClass) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelector('.nav-item.' + navClass).classList.add('active');
+    }
 
-            Papa.parse(taskText, { header: false, skipEmptyLines: true, complete: (tasks) => {
-                Papa.parse(tallyText, { header: false, skipEmptyLines: true, complete: (tallies) => {
-                    render(tasks.data, tallies.data);
-                }});
-            }});
-        } catch (e) { console.error("Database sync issue"); }
+    async function fetchData() {
+        if(LIVE_CSV.includes('PASTE')) return;
+        try {
+            const [taskRes, tallyRes] = await Promise.all([fetch(LIVE_CSV), fetch(TALLY_CSV)]);
+            const tasks = Papa.parse(await taskRes.text(), {header:true}).data;
+            const tallies = Papa.parse(await tallyRes.text(), {header:true}).data;
+            render(tasks, tallies);
+        } catch (e) { console.log("Database Syncing..."); }
     }
 
     function render(tasks, tallies) {
-        let scores = { "Isabella": 0, "Liv": 0 };
-        let boards = { "Isabella": [], "Liv": [] };
+        let stats = { "Isabella": { total:0 }, "Liv": { total:20 } };
+        let taskGroups = { "Self Care": [], "Spiritual Health": [], "Workload": [] };
 
-        // 1. Permanent Tally Sum
-        tallies.forEach((row, i) => {
-            if (i === 0) return;
-            const name = row[1] ? row[1].trim() : "";
-            const pts = parseInt(row[2]) || 0;
-            if (scores.hasOwnProperty(name)) scores[name] += pts;
+        // 1. Process Total XP
+        tallies.forEach(row => {
+            const n = row.Name;
+            const p = parseInt(row.Points) || 0;
+            if (stats[n]) stats[n].total += p;
         });
 
-        // 2. Penalty Check
-        Object.keys(scores).forEach(n => { if(scores[n] >= 200) scores[n] -= 10; });
-
-        // 3. Live Tasks (Current To-Do list)
-        tasks.forEach((row, i) => {
-            if (i === 0) return;
-            const name = row[1] ? row[1].trim() : "";
-            if (boards.hasOwnProperty(name)) {
-                boards[name].push({ task: row[2], pts: row[3] });
+        // 2. Filter Active (Uncompleted) Tasks
+        tasks.forEach(row => {
+            const cat = row.Category;
+            const status = row.Status;
+            if (taskGroups[cat] && status !== "Completed") {
+                taskGroups[cat].push(row);
             }
         });
 
-        const container = document.getElementById('arena');
-        container.innerHTML = '';
-
-        Object.keys(scores).forEach(name => {
-            let taskHtml = boards[name].map(t => `
-                <div class="task-card" onclick="complete('${name}', '${t.task}', ${t.pts}, this)">
-                    <div class="check"></div>
-                    <div class="task-info">
-                        <div style="font-weight:bold">${t.task || "New Task"}</div>
-                        <span class="pts-tag">+${t.pts || 0} PTS</span>
-                    </div>
-                </div>
-            `).join('');
-
-            container.innerHTML += `
-                <div class="player-column">
-                    <p class="score">${scores[name]}</p>
-                    <div style="height:4px; width:40px; background:#333; margin:10px auto; border-radius:10px;"></div>
-                    <h2 class="name-label">${name}</h2>
-                    <div>${taskHtml || '<p style="color:#333">All tasks done!</p>'}</div>
-                </div>
-            `;
+        // 3. Render Leaderboard
+        let lbHtml = '';
+        Object.keys(stats).forEach(name => {
+            lbHtml += `<div class="player-header">
+                <p class="big-score">${stats[name].total}</p>
+                <p class="score-label">${name} Total XP</p>
+            </div>`;
         });
+        document.getElementById('leaderboard-content').innerHTML = lbHtml;
+
+        // 4. Render Categorized Task Lists
+        renderCategory('sc-list', taskGroups["Self Care"], 'sc');
+        renderCategory('sh-list', taskGroups["Spiritual Health"], 'sh');
+        renderCategory('wl-list', taskGroups["Workload"], 'wl');
     }
 
-    function complete(name, task, pts, el) {
-        // BLANK IT OUT: We add the 'completed' class immediately
+    function renderCategory(containerId, tasks, cssClass) {
+        document.getElementById(containerId).innerHTML = tasks.map(t => `
+            <div class="task-card ${cssClass}" onclick="completeTask('${t['Who are you?']}', '${t['Task Name']}', ${t.Points}, '${t.Category}', this)">
+                <div class="check-circle"></div>
+                <div class="task-info">
+                    <div style="font-weight:600; font-size:1.1rem;">${t['Task Name']}</div>
+                    <div style="color:#555; font-size:0.8rem; margin-top:2px;">${t['Who are you?']}</div>
+                </div>
+                <div class="pts-badge">+${t.Points}</div>
+            </div>
+        `).join('') || '<p style="text-align:center; color:#333; margin-top:50px;">No active tasks here.</p>';
+    }
+
+    function completeTask(name, task, pts, cat, el) {
         el.classList.add('completed');
-        
-        // SAVE TO DB
-        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}&task=${encodeURIComponent(task)}`, {mode: 'no-cors'});
-        
-        // Sync back with the sheet after it processes
-        setTimeout(refresh, 2500);
+        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}&task=${encodeURIComponent(task)}&category=${cat}`, {mode:'no-cors'});
+        setTimeout(fetchData, 2000);
     }
 
-    refresh();
-    setInterval(refresh, 45000); 
+    fetchData();
+    setInterval(fetchData, 30000);
 </script>
 </body>
 </html>

@@ -90,7 +90,7 @@
         .check-box { width: 20px; height: 20px; border: 1px solid #333; border-radius: 50%; margin-right: 15px; }
         .pts-tag { margin-left: auto; font-size: 0.7rem; font-weight: bold; color: #555; }
         
-        .score-card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1a1a1a; text-align: center; }
+        .score-card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1a1a1a; text-align: center; font-size: 1rem}
         .big-xp { font-size: 2.8rem; font-weight: 200; margin: 0; }
         .chart-container { background: var(--card); padding: 15px; border-radius: 15px; height: 250px; margin-top: 20px; border: 1px solid #1a1a1a; }
     </style>
@@ -111,31 +111,43 @@
         <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
     </div>
     <div id="PageST" class="page active"> 
-    <h1 style="color:var(--st)">Leaderboard</h1>
+    <h1 style="color:var(--st)">Tasks and Stats</h1>
     
     <div id="stats-content"></div>
 
     <button class="form-trigger" onclick="toggleForm()">+ Add Task</button>
     
-    <div id="form-container" style="display:none; margin-top:20px; border-radius:15px; overflow:hidden; border:1px solid #1a1a1a;">
-        <iframe src="https://forms.gle/rgALQ1WbBBJ9cTwo9" width="100%" height="500" frameborder="0">Loading…</iframe>
-        <button onclick="toggleForm()" style="background:none; border:none; color:#444; width:100%; padding:15px; font-size:0.7rem; letter-spacing:1px;">CLOSE FORM</button>
+    <div id="form-container" style="display:none; background: #121212; padding: 20px; border-radius: 15px; border: 1px solid #1a1a1a; margin-top: 15px;">
+    <h3 style="font-size: 0.7rem; color: #444; letter-spacing: 2px;">NEW TASK</h3>
+    
+    <input type="text" id="f-task" placeholder="Task Name..." style="width:100%; background:#0a0a0a; border:1px solid #333; color:white; padding:12px; border-radius:8px; margin-bottom:10px; box-sizing: border-box;">
+    
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <input type="number" id="f-pts" placeholder="Points" style="width:30%; background:#0a0a0a; border:1px solid #333; color:white; padding:12px; border-radius:8px; box-sizing: border-box;">
+        <select id="f-cat" style="width:70%; background:#0a0a0a; border:1px solid #333; color:white; padding:12px; border-radius:8px;">
+            <option value="Self Care">Self Care</option>
+            <option value="Spiritual Health">Spiritual Health</option>
+            <option value="Workload">Workload</option>
+        </select>
     </div>
+
+    <button onclick="submitNewTask()" style="width:100%; background:var(--wl); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; letter-spacing:1px;">ADD TO ARENA</button>
+</div>
 
     <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
 </div>
 
     <nav class="bottom-nav">
-        <button class="nav-item sc" onclick="showTab('PageSC', 'sc')"><span class="nav-icon">🌸</span>Care</button>
-        <button class="nav-item sh" onclick="showTab('PageSH', 'sh')"><span class="nav-icon">✨</span>Spirit</button>
-        <button class="nav-item wl" onclick="showTab('PageWL', 'wl')"><span class="nav-icon">📚</span>Work</button>
-        <button class="nav-item active st" onclick="showTab('PageST', 'st')"><span class="nav-icon">📊</span>Stats</button>
+        <button class="nav-item sc" onclick="showTab('PageSC', 'sc')"><span class="nav-icon">&#10084;</span>Self care</button>
+        <button class="nav-item sh" onclick="showTab('PageSH', 'sh')"><span class="nav-icon">&#9841;</span>Spiritual Health</button>
+        <button class="nav-item wl" onclick="showTab('PageWL', 'wl')"><span class="nav-icon">&#9998;</span>Workload</button>
+        <button class="nav-item active st" onclick="showTab('PageST', 'st')"><span class="nav-icon">&#9750;</span>Home</button>
     </nav>
 
 <script>
     const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv';
     const TALLY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=0&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9VM_pdYiRueFjUE07mrfMJUmaHfXzLGQ8gvtsEa2nRNmdJCE6ctoGOWkdghOwxVrh0w/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzt_C-UA7BE16Rj3nSWMqeBzTWxMwqWJoAX_RRlBJRbhhQ4Un96rkh57HVDnZEnqTFSsQ/exec';
 
     let currentUser = 'Liv';
     let myChart;
@@ -208,6 +220,27 @@
 
         updateChart(stats);
     }
+
+    async function submitNewTask() {
+    const task = document.getElementById('f-task').value;
+    const pts = document.getElementById('f-pts').value;
+    const cat = document.getElementById('f-cat').value;
+    
+    if(!task || !pts) return alert("Fill it in!");
+
+    // This uses your existing Apps Script! 
+    // We just need to add a "mode=add" to your Apps Script later to handle new tasks
+    const url = `${SCRIPT_URL}?mode=add&name=${currentUser}&task=${encodeURIComponent(task)}&points=${pts}&category=${cat}`;
+    
+    fetch(url, {mode:'no-cors'});
+    
+    // Reset and close
+    document.getElementById('f-task').value = '';
+    document.getElementById('f-pts').value = '';
+    toggleForm();
+    
+    setTimeout(fetchData, 2000);
+}
 
     function renderList(id, items, cls) {
         document.getElementById(id).innerHTML = items.map(i => `

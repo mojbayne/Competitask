@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Competitask","short_name":"Arena","start_url":".","display":"standalone","background_color":"#0a0a0a","theme_color":"#0f0f0f"}'>
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Competitask","short_name":"Arena","start_url":"/","display":"standalone","background_color":"#0a0a0a","theme_color":"#0f0f0f","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1162/1162283.png","sizes":"512x512","type":"image/png"}]}'>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <meta charset="UTF-8">
     <title>Competitask</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22></text>&#x1F3C9;</svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         :root { 
             --bg: #0a0a0a; 
@@ -22,7 +29,7 @@
             background: var(--bg); color: #d1d1d1; 
             font-family: 'Inter', sans-serif; margin: 0; 
             overflow-x: hidden; min-height: 100svh; 
-            padding-bottom: 100px; /* Space for Nav */
+            padding-bottom: 100px; 
             display: flex; flex-direction: column;
         }
 
@@ -122,8 +129,8 @@
     </div>
 
     <nav class="bottom-nav">
-        <button class="nav-item sc" onclick="showTab('PageSC', 'sc')"><span class="nav-icon">&#10084;</span>Self care</button>
-        <button class="nav-item sh" onclick="showTab('PageSH', 'sh')"><span class="nav-icon">&#9841;</span>Spirit</button>
+        <button class="nav-item sc" onclick="showTab('PageSC', 'sc')"><span class="nav-icon">&#9841;</span>Self care</button>
+        <button class="nav-item sh" onclick="showTab('PageSH', 'sh')"><span class="nav-icon">&#9998;</span>Spirit</button>
         <button class="nav-item wl" onclick="showTab('PageWL', 'wl')"><span class="nav-icon">&#9998;</span>Workload</button>
         <button class="nav-item active st" onclick="showTab('PageST', 'st')"><span class="nav-icon">&#9750;</span>Home</button>
     </nav>
@@ -260,6 +267,13 @@
 
     fetchData();
     setInterval(fetchData, 30000);
+
+    // 3. SERVICE WORKER REGISTRATION (UNLOCKS PWA)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('data:application/javascript,self.addEventListener("fetch", function(event){});')
+      .then(() => console.log("PWA Active"))
+      .catch((err) => console.log("PWA Error", err));
+    }
 </script>
 </body>
 </html>

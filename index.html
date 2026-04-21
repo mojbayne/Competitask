@@ -18,14 +18,17 @@
         }
 
         body { 
-            background: var(--bg); 
-            color: #d1d1d1; 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            /* Crucial: This padding must be at least as tall as your nav bar */
-            padding-bottom: 100px; 
-            min-height: 100vh;
-            box-sizing: border-box;
+    background: var(--bg); 
+    color: #d1d1d1; 
+    font-family: 'Inter', sans-serif; 
+    margin: 0; 
+    /* This ensures the body never traps the footer */
+    overflow-x: hidden; 
+    /* Use svh to account for mobile address bars */
+    min-height: 100svh; 
+    padding-bottom: 90px; 
+    display: flex;
+    flex-direction: column;
 }
         
         /* User Filter Bar */
@@ -42,19 +45,27 @@
 
         /* Bottom Nav */
         .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0;
-            right: 0;
-            width: 100%; 
-            height: 75px; 
-            background: red; 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center; 
-            border-top: 1px solid #1a1a1a; 
-            /* Crucial: This ensures the menu stays on the very top layer */
-            z-index: 9999; 
+    position: fixed; 
+    /* This forces it to the bottom of the visible screen */
+    bottom: 0; 
+    left: 0;
+    width: 100%; 
+    height: 75px; 
+    background: #0f0f0f; 
+    display: flex; 
+    justify-content: space-around; 
+    align-items: center; 
+    border-top: 1px solid #1a1a1a; 
+    /* A massive z-index to stay above everything else */
+    z-index: 99999 !important; 
+    /* Prevents clicking "through" the bar to items underneath */
+    pointer-events: auto; 
+}
+
+        /* Ensure no parent container is accidentally hiding the nav */
+#PageSC, #PageSH, #PageWL, #PageST {
+    width: 100%;
+    overflow: visible !important;
 }
         .nav-item { 
             border: none; background: none; color: #444; font-size: 0.6rem; 

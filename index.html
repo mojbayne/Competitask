@@ -4,119 +4,132 @@
     <meta charset="UTF-8">
     <title>Competitask</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { 
             --bg: #0a0a0a; 
-            --selfcare: #ff85a2; 
-            --spiritual: #00ff88; 
-            --workload: #4dabff; 
-            --stats: #ffd700;
-            --card: #161616;
+            /* Muted / Dull Dark Mode Colors */
+            --sc: #a37c86; 
+            --sh: #6b8a7a; 
+            --wl: #5b7a94; 
+            --st: #918b6d; 
+            --card: #121212; 
         }
 
         body { 
-            background: var(--bg); color: white; 
+            background: var(--bg); color: #d1d1d1; 
             font-family: 'Inter', -apple-system, sans-serif; 
             margin: 0; padding-bottom: 90px; 
-            -webkit-tap-highlight-color: transparent;
         }
+        
+        /* User Filter Bar */
+        .user-bar { 
+            display: flex; background: #0f0f0f; padding: 12px; gap: 10px; 
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #1a1a1a; 
+        }
+        .user-btn { 
+            flex: 1; border: 1px solid #222; background: #141414; color: #555; 
+            padding: 8px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; 
+            letter-spacing: 1px; cursor: pointer; transition: 0.2s; 
+        }
+        .user-btn.active { background: #222; color: #ddd; border-color: #444; }
 
-        /* Bottom Sticky Nav */
+        /* Bottom Nav */
         .bottom-nav { 
             position: fixed; bottom: 0; width: 100%; height: 75px; 
-            background: #111; display: flex; justify-content: space-around; 
-            align-items: center; border-top: 1px solid #222; z-index: 1000;
+            background: #0f0f0f; display: flex; justify-content: space-around; 
+            align-items: center; border-top: 1px solid #1a1a1a; 
         }
         .nav-item { 
-            border: none; background: none; color: #444; 
-            font-size: 0.65rem; text-transform: uppercase; cursor: pointer; 
-            display: flex; flex-direction: column; align-items: center;
-            letter-spacing: 1px; transition: 0.3s;
+            border: none; background: none; color: #444; font-size: 0.6rem; 
+            cursor: pointer; display: flex; flex-direction: column; 
+            align-items: center; text-transform: uppercase; letter-spacing: 1px; 
         }
-        .nav-item.active.sc { color: var(--selfcare); }
-        .nav-item.active.sh { color: var(--spiritual); }
-        .nav-item.active.wl { color: var(--workload); }
-        .nav-item.active.st { color: var(--stats); }
-        .nav-icon { font-size: 1.6rem; margin-bottom: 4px; }
+        .nav-item.active.sc { color: var(--sc); }
+        .nav-item.active.sh { color: var(--sh); }
+        .nav-item.active.wl { color: var(--wl); }
+        .nav-item.active.st { color: var(--st); }
+        .nav-icon { font-size: 1.3rem; margin-bottom: 4px; filter: grayscale(40%); }
 
-        /* Pages */
-        .page { display: none; padding: 25px; animation: fadeIn 0.4s ease; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        h1 { font-size: 1.8rem; margin-bottom: 25px; letter-spacing: -1px; }
-
-        /* Stats Page Specifics */
+        /* Content Areas */
         .form-trigger {
-            background: var(--stats); color: black; border: none;
-            padding: 18px; width: 100%; border-radius: 18px;
-            font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 25px; cursor: pointer;
+            background: #1a1a1a;
+            color: #888;
+            border: 1px solid #333;
+            padding: 15px;
+            width: 100%;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 10px;
         }
-        #form-container { background: #111; border-radius: 20px; overflow: hidden; margin-bottom: 25px; }
+        .form-trigger:active {
+            background: #222;
+            color: #aaa;
+        }
+        .page { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .player-header { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #222; }
-        .big-score { font-size: 3.5rem; font-weight: 900; margin: 0; line-height: 1; color: var(--stats); }
-        .score-label { color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; margin-top: 5px; }
+        h1 { font-size: 1.2rem; font-weight: 300; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 25px; }
 
-        /* Task Cards */
         .task-card { 
-            background: var(--card); padding: 18px; margin-bottom: 12px; 
-            border-radius: 18px; display: flex; align-items: center; 
-            border: 1px solid #222; transition: all 0.3s ease;
+            background: var(--card); padding: 16px; margin-bottom: 12px; 
+            border-radius: 12px; display: flex; align-items: center; 
+            border: 1px solid #1a1a1a; position: relative; 
         }
-        .task-card.sc { border-left: 6px solid var(--selfcare); }
-        .task-card.sh { border-left: 6px solid var(--spiritual); }
-        .task-card.wl { border-left: 6px solid var(--workload); }
+        .task-card::before { content: ''; position: absolute; left: 0; top: 15%; bottom: 15%; width: 3px; border-radius: 0 4px 4px 0; }
+        .task-card.sc::before { background: var(--sc); }
+        .task-card.sh::before { background: var(--sh); }
+        .task-card.wl::before { background: var(--wl); }
+
+        .check-box { width: 20px; height: 20px; border: 1px solid #333; border-radius: 50%; margin-right: 15px; }
+        .pts-tag { margin-left: auto; font-size: 0.7rem; font-weight: bold; color: #555; }
         
-        .task-card.completed { opacity: 0; transform: translateX(50px); pointer-events: none; }
-
-        .check-circle { width: 24px; height: 24px; border: 2px solid #333; border-radius: 50%; margin-right: 15px; flex-shrink: 0; }
-        .task-info { flex-grow: 1; }
-        .pts-badge { background: #222; padding: 4px 8px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; color: #888; }
-
-        .chart-box { background: var(--card); padding: 20px; border-radius: 22px; height: 300px; margin-top: 20px; border: 1px solid #222; }
+        .score-card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1a1a1a; text-align: center; }
+        .big-xp { font-size: 2.8rem; font-weight: 200; margin: 0; }
+        .chart-container { background: var(--card); padding: 15px; border-radius: 15px; height: 250px; margin-top: 20px; border: 1px solid #1a1a1a; }
     </style>
 </head>
 <body>
 
-    <div id="SelfCarePage" class="page">
-        <h1 style="color:var(--selfcare)">Self Care</h1>
-        <div id="sc-list"></div>
+    <div class="user-bar" id="userSelector">
+        <button class="user-btn active" onclick="setUser('Isabella')">ISABELLA</button>
+        <button class="user-btn" onclick="setUser('Liv')">LIV</button>
     </div>
 
-    <div id="SpiritualPage" class="page">
-        <h1 style="color:var(--spiritual)">Spiritual Health</h1>
-        <div id="sh-list"></div>
+    <div id="PageSC" class="page"> <h1 style="color:var(--sc)">Self Care</h1> <div id="list-sc"></div> </div>
+    <div id="PageSH" class="page"> <h1 style="color:var(--sh)">Spiritual Health</h1> <div id="list-sh"></div> </div>
+    <div id="PageWL" class="page"> <h1 style="color:var(--wl)">Workload</h1> <div id="list-wl"></div> </div>
+    <div id="PageST" class="page active"> 
+        <h1 style="color:var(--st)">Leaderboard</h1>
+        <div id="stats-content"></div>
+        <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
+    </div>
+    <div id="PageST" class="page active"> 
+    <h1 style="color:var(--st)">Leaderboard</h1>
+    
+    <div id="stats-content"></div>
+
+    <button class="form-trigger" onclick="toggleForm()">+ Add Task</button>
+    
+    <div id="form-container" style="display:none; margin-top:20px; border-radius:15px; overflow:hidden; border:1px solid #1a1a1a;">
+        <iframe src="https://forms.gle/rgALQ1WbBBJ9cTwo9" width="100%" height="500" frameborder="0">Loading…</iframe>
+        <button onclick="toggleForm()" style="background:none; border:none; color:#444; width:100%; padding:15px; font-size:0.7rem; letter-spacing:1px;">CLOSE FORM</button>
     </div>
 
-    <div id="WorkloadPage" class="page">
-        <h1 style="color:var(--workload)">Workload</h1>
-        <div id="wl-list"></div>
-    </div>
-
-    <div id="StatsPage" class="page active">
-        <h1 style="color:var(--stats)">COMPETITASK STATS</h1>
-        
-        <button class="form-trigger" onclick="toggleForm()">+ New Task</button>
-        
-        <div id="form-container" style="display:none;">
-            <iframe src="https://forms.gle/M4ghAGdo5DvrfpJB9" width="100%" height="550" frameborder="0">Loading…</iframe>
-            <button onclick="toggleForm()" style="background:none; border:none; color:#444; width:100%; padding:15px; font-weight:bold;">Close Window</button>
-        </div>
-
-        <div id="leaderboard-content"></div>
-        <div class="chart-box"><canvas id="weeklyChart"></canvas></div>
-    </div>
+    <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
+</div>
 
     <nav class="bottom-nav">
-        <button class="nav-item sc" onclick="showPage('SelfCarePage', 'sc')"><span class="nav-icon">🌸</span>Care</button>
-        <button class="nav-item sh" onclick="showPage('SpiritualPage', 'sh')"><span class="nav-icon">✨</span>Spirit</button>
-        <button class="nav-item wl" onclick="showPage('WorkloadPage', 'wl')"><span class="nav-icon">📚</span>Work</button>
-        <button class="nav-item active st" onclick="showPage('StatsPage', 'st')"><span class="nav-icon">📊</span>Stats</button>
+        <button class="nav-item sc" onclick="showTab('PageSC', 'sc')"><span class="nav-icon">🌸</span>Care</button>
+        <button class="nav-item sh" onclick="showTab('PageSH', 'sh')"><span class="nav-icon">✨</span>Spirit</button>
+        <button class="nav-item wl" onclick="showTab('PageWL', 'wl')"><span class="nav-icon">📚</span>Work</button>
+        <button class="nav-item active st" onclick="showTab('PageST', 'st')"><span class="nav-icon">📊</span>Stats</button>
     </nav>
 
 <script>
@@ -124,130 +137,116 @@
     const TALLY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=0&single=true&output=csv';
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9VM_pdYiRueFjUE07mrfMJUmaHfXzLGQ8gvtsEa2nRNmdJCE6ctoGOWkdghOwxVrh0w/exec';
 
+    let currentUser = 'Liv';
+    let myChart;
+
     function toggleForm() {
-        const f = document.getElementById('form-container');
-        f.style.display = (f.style.display === 'none') ? 'block' : 'none';
+    const f = document.getElementById('form-container');
+    f.style.display = (f.style.display === 'none') ? 'block' : 'none';
+    }
+    
+    function setUser(name) {
+        currentUser = name;
+        document.querySelectorAll('.user-btn').forEach(b => b.classList.toggle('active', b.innerText === name.toUpperCase()));
+        fetchData();
     }
 
-    function showPage(pageId, navClass) {
+    function showTab(id, cls) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-        document.querySelector('.nav-item.' + navClass).classList.add('active');
+        document.getElementById(id).classList.add('active');
+        document.querySelector('.nav-item.'+cls).classList.add('active');
     }
 
     async function fetchData() {
         if(LIVE_CSV.includes('PASTE')) return;
         try {
-            const [taskRes, tallyRes] = await Promise.all([fetch(LIVE_CSV), fetch(TALLY_CSV)]);
-            const tasks = Papa.parse(await r1.text(), {header: false, skipEmptyLines: true}).data;
-            const tallies = Papa.parse(await tallyRes.text(), {header:true}).data;
+            const [r1, r2] = await Promise.all([fetch(LIVE_CSV), fetch(TALLY_CSV)]);
+            const tasks = Papa.parse(await r1.text(), {header:false}).data;
+            const tallies = Papa.parse(await r2.text(), {header:false}).data;
             render(tasks, tallies);
-        } catch (e) { console.log("Database Syncing..."); }
+        } catch (e) { console.error("Sync error"); }
     }
 
     function render(tasks, tallies) {
-    let stats = { 
-        "isabella": { display: "Isabella", total: 0, weekly: [0,0,0,0,0,0,0] }, 
-        "liv": { display: "Liv", total: 0, weekly: [0,0,0,0,0,0,0] } 
-    };
-    let taskGroups = { "Self Care": [], "Spiritual Health": [], "Workload": [] };
+        let stats = { "isabella": { display: "Isabella", total: 0, weekly: [0,0,0,0,0,0,0] }, 
+                      "liv": { display: "Liv", total: 0, weekly: [0,0,0,0,0,0,0] } };
+        let taskGroups = { "Self Care": [], "Spiritual Health": [], "Workload": [] };
 
-    // 1. Process Tally (XP & Graph)
-    tallies.forEach((row, i) => {
-        if (i === 0 || row.length < 2) return; 
-        const name = row[1] ? row[1].trim().toLowerCase() : "";
-        const pts = parseInt(row[2]) || 0;
-        const date = new Date(row[0]);
-        
-        if (stats[name]) {
-            stats[name].total += pts;
-            // The graph will now work even without the category column!
-            if (!isNaN(date.getDay())) {
-                stats[name].weekly[date.getDay()] += pts;
+        tallies.forEach((row, i) => {
+            if(i === 0 || row.length < 2) return;
+            const name = (row[1]||"").trim().toLowerCase();
+            const pts = parseInt(row[2]) || 0;
+            const d = new Date(row[0]);
+            if(stats[name]) {
+                stats[name].total += pts;
+                if(!isNaN(d.getDay())) stats[name].weekly[d.getDay()] += pts;
             }
-        }
-    });
-
-    // 2. Process Live Tasks
-    tasks.forEach((row, i) => {
-    // 1. Skip the header row (Row 1)
-    if (i === 0) return;
-
-    // 2. Safety check: Does this row have at least a Name and Task?
-    if (!row[1] || !row[2]) return;
-
-    // 3. Status Check: Only skip if it explicitly says "Completed"
-    // If Column F (row[5]) is empty, it will NOT be skipped.
-    const status = (row[5] || "").trim().toLowerCase();
-    if (status === "completed") return;
-
-    // 4. Map the data to the correct boxes
-    const person   = row[1].trim();
-    const taskName = row[2].trim();
-    const points   = row[3] || "0";
-    const category = (row[4] || "Workload").trim();
-
-    if (groups[category]) {
-        groups[category].push({ 
-            name: person, 
-            task: taskName, 
-            pts: points, 
-            cat: category 
         });
+
+        tasks.forEach((row, i) => {
+            if(i === 0) return;
+            const rowUser = (row[1]||"").trim();
+            const status = (row[5]||"").trim().toLowerCase();
+            const cat = (row[4]||"").trim();
+
+            if(rowUser === currentUser && status !== "completed" && taskGroups[cat]) {
+                taskGroups[cat].push({ task: row[2], pts: row[3], cat: cat });
+            }
+        });
+
+        renderList('list-sc', taskGroups["Self Care"], 'sc');
+        renderList('list-sh', taskGroups["Spiritual Health"], 'sh');
+        renderList('list-wl', taskGroups["Workload"], 'wl');
+
+        document.getElementById('stats-content').innerHTML = Object.keys(stats).map(k => `
+            <div class="score-card">
+                <p class="big-xp">${stats[k].total}</p>
+                <p style="color:#444; font-size: 0.6rem; letter-spacing:2px; margin:0;">${stats[k].display.toUpperCase()}</p>
+            </div>
+        `).join('');
+
+        updateChart(stats);
     }
-});
 
-    // Update the Leaderboard Display
-    document.getElementById('leaderboard-content').innerHTML = Object.keys(stats).map(key => `
-        <div class="player-header">
-            <p class="big-score">${stats[key].total}</p>
-            <p class="score-label">${stats[key].display} Total XP</p>
-        </div>
-    `).join('');
-
-    // Update Task Lists
-    const listMap = { "sc-list": "Self Care", "sh-list": "Spiritual Health", "wl-list": "Workload" };
-    Object.keys(listMap).forEach(id => {
-        const categoryName = listMap[id];
-        const list = taskGroups[categoryName];
-        document.getElementById(id).innerHTML = list.length > 0 ? list.map(t => `
-            <div class="task-card ${id.split('-')[0]}" onclick="completeTask('${t.name}', '${t.taskText}', ${t.pts}, '${t.cat}', this)">
-                <div class="check-circle"></div>
-                <div class="task-info">
-                    <div style="font-weight:600; font-size:1.1rem;">${t.taskText}</div>
-                    <div style="color:#555; font-size:0.8rem;">${t.name}</div>
-                </div>
-                <div class="pts-badge">+${t.pts}</div>
+    function renderList(id, items, cls) {
+        document.getElementById(id).innerHTML = items.map(i => `
+            <div class="task-card ${cls}" onclick="complete('${currentUser}','${i.task}',${i.pts},'${i.cat}',this)">
+                <div class="check-box"></div>
+                <div style="font-size: 0.95rem; color: #bbb;">${i.task}</div>
+                <div class="pts-tag">+${i.pts}</div>
             </div>
-        `).join('') : '<p style="text-align:center; color:#333; margin-top:50px;">Nothing pending.</p>';
-    });
+        `).join('') || '<p style="text-align:center; color:#222; margin-top:50px; font-size:0.8rem;">CLEAN SLATE</p>';
+    }
 
-    updateWeeklyChart(stats);
-}
-
-    function renderCategory(containerId, tasks, cssClass) {
-    // Sort tasks alphabetically by name so Isabella's are grouped and Liv's are grouped
-    tasks.sort((a, b) => a.name.localeCompare(b.name));
-
-    document.getElementById(containerId).innerHTML = tasks.map(t => `
-        <div class="task-card ${cssClass}" onclick="completeTask('${t.name}', '${t.taskText}', ${t.pts}, '${t.cat}', this)">
-            <div class="check-circle"></div>
-            <div class="task-info">
-                <div style="font-weight:600; font-size:1.1rem;">${t.taskText}</div>
-                <div style="color:${t.name === 'Isabella' ? '#ffd700' : '#ff85a2'}; font-size:0.8rem; font-weight:bold; text-transform:uppercase;">
-                    ${t.name}
-                </div>
-            </div>
-            <div class="pts-badge">+${t.pts}</div>
-        </div>
-    `).join('') || '<p style="text-align:center; color:#333; margin-top:50px;">Nothing pending.</p>';
-}
-
-    function completeTask(name, task, pts, cat, el) {
-        el.classList.add('completed');
-        fetch(`${SCRIPT_URL}?name=${name}&points=${pts}&task=${encodeURIComponent(task)}&category=${cat}`, {mode:'no-cors'});
+    function complete(n, t, p, c, el) {
+        el.style.opacity = '0.1';
+        el.style.pointerEvents = 'none';
+        fetch(`${SCRIPT_URL}?name=${n}&points=${p}&task=${encodeURIComponent(t)}&category=${c}`, {mode:'no-cors'});
         setTimeout(fetchData, 2000);
+    }
+
+    function updateChart(s) {
+        const ctx = document.getElementById('weeklyChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['S','M','T','W','T','F','S'],
+                datasets: [
+                    { label:'Isabella', data:s.isabella.weekly, borderColor:'#777', borderWidth: 1, pointRadius: 0, tension:0.3 },
+                    { label:'Liv', data:s.liv.weekly, borderColor:'#444', borderWidth: 1, pointRadius: 0, tension:0.3 }
+                ]
+            },
+            options: { 
+                maintainAspectRatio:false, 
+                plugins:{legend:{display:false}}, 
+                scales:{
+                    y:{beginAtZero:true, grid:{color:'#111'}, ticks:{color:'#333'}}, 
+                    x:{grid:{display:false}, ticks:{color:'#333'}}
+                } 
+            }
+        });
     }
 
     fetchData();

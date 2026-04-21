@@ -90,7 +90,8 @@
         .check-box { width: 20px; height: 20px; border: 1px solid #333; border-radius: 50%; margin-right: 15px; }
         .pts-tag { margin-left: auto; font-size: 0.7rem; font-weight: bold; color: #555; }
         
-        .score-card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1a1a1a; text-align: center; font-size: 1rem}
+        .score-card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1a1a1a; text-align: center; }
+        .score-card p { font-size: 2rem; }
         .big-xp { font-size: 2.8rem; font-weight: 200; margin: 0; }
         .chart-container { background: var(--card); padding: 15px; border-radius: 15px; height: 250px; margin-top: 20px; border: 1px solid #1a1a1a; }
     </style>
@@ -131,11 +132,9 @@
         </select>
     </div>
 
-    <button onclick="submitNewTask()" style="width:100%; background:var(--wl); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; letter-spacing:1px;">ADD TO ARENA</button>
+    <button onclick="submitNewTask()" style="width:100%; background:var(--wl); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; letter-spacing:1px;">Submit Task</button>
 </div>
 
-    <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
-</div>
 
     <nav class="bottom-nav">
         <button class="nav-item sc" onclick="showTab('PageSC', 'sc')"><span class="nav-icon">&#10084;</span>Self care</button>

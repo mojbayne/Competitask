@@ -122,7 +122,7 @@
 <script>
     const LIVE_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=716577834&single=true&output=csv';
     const TALLY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQtF-7BhHKReQgwl6fhdU3UL8QqRvQHLWeNvU42tssJknaTXX0LZgqkeaZeSv6e_FT-cHOi6hlAvpEG/pub?gid=0&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwe2i08weEFwuFtkBktSLe62AaUjVOskuF5WykGlJzXjlajz6gm1g6wqLeJ2YmXKUvz-g/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9VM_pdYiRueFjUE07mrfMJUmaHfXzLGQ8gvtsEa2nRNmdJCE6ctoGOWkdghOwxVrh0w/exec';
 
     function toggleForm() {
         const f = document.getElementById('form-container');
@@ -147,40 +147,69 @@
     }
 
     function render(tasks, tallies) {
-        let stats = { "Isabella": { total:0 }, "Liv": { total:0 } };
-        let taskGroups = { "Self Care": [], "Spiritual Health": [], "Workload": [] };
+    let stats = { 
+        "isabella": { display: "Isabella", total: 0, weekly: [0,0,0,0,0,0,0] }, 
+        "liv": { display: "Liv", total: 0, weekly: [0,0,0,0,0,0,0] } 
+    };
+    let taskGroups = { "Self Care": [], "Spiritual Health": [], "Workload": [] };
 
-        // 1. Process Total XP
-        tallies.forEach(row => {
-            const n = row.Name;
-            const p = parseInt(row.Points) || 0;
-            if (stats[n]) stats[n].total += p;
-        });
-
-        // 2. Filter Active (Uncompleted) Tasks
-        tasks.forEach(row => {
-            const cat = row.Category;
-            const status = row.Status;
-            if (taskGroups[cat] && status !== "Completed") {
-                taskGroups[cat].push(row);
+    // 1. Process Tally (XP & Graph)
+    tallies.forEach((row, i) => {
+        if (i === 0 || row.length < 2) return; 
+        const name = row[1] ? row[1].trim().toLowerCase() : "";
+        const pts = parseInt(row[2]) || 0;
+        const date = new Date(row[0]);
+        
+        if (stats[name]) {
+            stats[name].total += pts;
+            // The graph will now work even without the category column!
+            if (!isNaN(date.getDay())) {
+                stats[name].weekly[date.getDay()] += pts;
             }
-        });
+        }
+    });
 
-        // 3. Render Leaderboard
-        let lbHtml = '';
-        Object.keys(stats).forEach(name => {
-            lbHtml += `<div class="player-header">
-                <p class="big-score">${stats[name].total}</p>
-                <p class="score-label">${name} Total XP</p>
-            </div>`;
-        });
-        document.getElementById('leaderboard-content').innerHTML = lbHtml;
+    // 2. Process Live Tasks
+    tasks.forEach((row, i) => {
+        if (i === 0 || row.length < 4) return;
+        const name = row[1] ? row[1].trim() : "";
+        const taskText = row[2];
+        const pts = row[3];
+        const cat = row[4] ? row[4].trim() : "Workload"; // Default to Workload if empty
+        const status = row[5] ? row[5].trim() : "";
 
-        // 4. Render Categorized Task Lists
-        renderCategory('sc-list', taskGroups["Self Care"], 'sc');
-        renderCategory('sh-list', taskGroups["Spiritual Health"], 'sh');
-        renderCategory('wl-list', taskGroups["Workload"], 'wl');
-    }
+        if (status.toLowerCase() !== "completed" && taskGroups[cat]) {
+            taskGroups[cat].push({ name, taskText, pts, cat });
+        }
+    });
+
+    // Update the Leaderboard Display
+    document.getElementById('leaderboard-content').innerHTML = Object.keys(stats).map(key => `
+        <div class="player-header">
+            <p class="big-score">${stats[key].total}</p>
+            <p class="score-label">${stats[key].display} Total XP</p>
+        </div>
+    `).join('');
+
+    // Update Task Lists
+    const listMap = { "sc-list": "Self Care", "sh-list": "Spiritual Health", "wl-list": "Workload" };
+    Object.keys(listMap).forEach(id => {
+        const categoryName = listMap[id];
+        const list = taskGroups[categoryName];
+        document.getElementById(id).innerHTML = list.length > 0 ? list.map(t => `
+            <div class="task-card ${id.split('-')[0]}" onclick="completeTask('${t.name}', '${t.taskText}', ${t.pts}, '${t.cat}', this)">
+                <div class="check-circle"></div>
+                <div class="task-info">
+                    <div style="font-weight:600; font-size:1.1rem;">${t.taskText}</div>
+                    <div style="color:#555; font-size:0.8rem;">${t.name}</div>
+                </div>
+                <div class="pts-badge">+${t.pts}</div>
+            </div>
+        `).join('') : '<p style="text-align:center; color:#333; margin-top:50px;">Nothing pending.</p>';
+    });
+
+    updateWeeklyChart(stats);
+}
 
     function renderCategory(containerId, tasks, cssClass) {
         document.getElementById(containerId).innerHTML = tasks.map(t => `
